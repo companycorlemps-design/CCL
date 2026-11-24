@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ht">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#12204a">
+<title>CCL1 — Vèndè</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#eef1f8;--card:#fff;--ink:#14213d;--mut:#6b7794;--line:#dde3f0;--brand:#12204a;--acc:#3d6bff;--gold:#f2b705;--ok:#13906a;--bad:#d0475a;color-scheme:light}
+@media(prefers-color-scheme:dark){:root{--bg:#0c1329;--card:#152044;--ink:#eaf0ff;--mut:#93a1c6;--line:#27366a;--brand:#0a1230;color-scheme:dark}}
+*{box-sizing:border-box}html,body{margin:0;height:100%}
+body{font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);padding-top:env(safe-area-inset-top)}
+header{background:var(--brand);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:5}
+header b{font-size:20px;letter-spacing:.5px}header b i{font-style:normal;color:var(--gold)}header span{margin-left:auto;font-size:12px;opacity:.8}
+main{padding:14px 14px calc(84px + env(safe-area-inset-bottom));max-width:620px;margin:auto}
+.screen{display:none}.screen.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+h3{margin:0 0 10px;font-size:16px}
+.f{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}.f label{font-size:12px;font-weight:700;color:var(--mut)}
+input,select{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;width:100%}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.err{color:var(--bad);font-size:12px;font-weight:600;min-height:0}
+button{font:inherit;border:0;border-radius:10px;padding:12px 14px;font-weight:700;background:var(--line);color:var(--ink);cursor:pointer}
+button.p{background:var(--acc);color:#fff}button.g{background:var(--gold);color:#241a00}button.d{background:transparent;color:var(--bad)}button.w{width:100%}
+.line{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px dashed var(--line)}.line:last-child{border:0}
+.line .t{margin-left:auto;font-weight:700}.mut{color:var(--mut);font-size:12px}
+.total{display:flex;justify-content:space-between;font-size:20px;font-weight:800;margin:12px 0}
+.chips{display:flex;gap:8px;margin-bottom:12px;overflow-x:auto}.chips button{white-space:nowrap;padding:8px 14px;border-radius:99px}.chips button.on{background:var(--brand);color:#fff}
+.badge{font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;background:#e3ecff;color:#1c3fb5}.badge.ganyan{background:#d8f5ea;color:var(--ok)}.badge.efase{background:#fde3e7;color:var(--bad)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.m{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}.m b{display:block;font-size:22px}.m span{font-size:12px;color:var(--mut)}
+nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding-bottom:env(safe-area-inset-bottom);z-index:6}
+nav button{background:none;border-radius:0;padding:12px 4px;font-size:12px;color:var(--mut)}nav button.on{color:var(--acc);box-shadow:inset 0 3px var(--acc)}
+#login{position:fixed;inset:0;background:var(--brand);z-index:20;display:flex;align-items:center;justify-content:center;padding:20px}
+#login .card{width:100%;max-width:380px}#login h1{margin:0 0 4px;font-size:30px;color:var(--ink)}#login h1 i{font-style:normal;color:var(--gold)}
+#modal{display:none;position:fixed;inset:0;background:rgba(5,10,30,.6);z-index:30;align-items:flex-end;justify-content:center;padding:0}
+#modal.on{display:flex}#modal .sheet{background:var(--card);width:100%;max-width:620px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:16px}
+.paper{background:#fff;color:#111;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;padding:16px;border-radius:6px;margin-bottom:12px;border:1px solid #ccc}
+.paper hr{border:0;border-top:1px dashed #555}.paper .c{text-align:center}.paper .r{display:flex;justify-content:space-between}
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#111;color:#fff;padding:10px 16px;border-radius:99px;font-size:13px;z-index:40;display:none;max-width:90%}
+@media print{body>*:not(#modal){display:none!important}#modal{position:static;background:none;display:block}#modal .sheet{max-height:none;padding:0;background:#fff}#modal .btns{display:none}.paper{border:0}}
+</style>
+</head>
+<body>
+<div id="login"><div class="card"><h1>CCL<i>1</i></h1><p class="mut" style="margin:0 0 6px">Espas vèndè</p><p class="mut" style="margin:0 0 14px;word-break:break-all">ID aparèy : <b id="lDev">...</b></p>
+<div class="f"><label>Non itilizatè</label><input id="lUser" autocomplete="username" autocapitalize="none" placeholder="Antre non itilizatè"><div class="err" id="eUser"></div></div>
+<div class="f"><label>Modpas</label><input id="lPass" type="password" autocomplete="current-password" placeholder="Antre modpas"><div class="err" id="ePass"></div></div>
+<div class="err" id="eLogin"></div>
+<button class="p w" onclick="login()">Konekte</button>
+<button class="w" style="margin-top:8px" onclick="demo()">Antre an mòd demo</button>
+<details style="margin-top:12px"><summary class="mut">Koneksyon sèvè</summary>
+<div class="f" style="margin-top:8px"><label>Supabase URL</label><input id="cUrl" placeholder="https://xxxx.supabase.co"></div>
+<div class="f"><label>Kle piblik (anon)</label><input id="cKey" placeholder="sb_publishable_..."></div>
+<button class="w" onclick="saveCfg()">Sove koneksyon</button></details></div></div>
+
+<header><b>CCL<i>1</i></b><span id="hUser"></span></header>
+<main>
+<section class="screen on" id="s-vann">
+ <div class="card"><h3>Nouvo tikè</h3>
+  <div class="row"><div class="f"><label>Tiraj</label><select id="vDraw"></select></div><div class="f"><label>Jwèt</label><select id="vGame"></select></div></div>
+  <div class="row"><div class="f"><label>Boul</label><input id="vBoul" inputmode="numeric" placeholder="Egz. 07"><div class="err" id="eBoul"></div></div><div class="f"><label>Montan (HTG)</label><input id="vAmt" type="number" inputmode="decimal" min="1" placeholder="Antre montan"><div class="err" id="eAmt"></div></div></div>
+  <button class="g w" onclick="addLine()">＋ Ajoute</button></div>
+ <div class="card"><h3>Panye</h3><div id="cart"></div><div class="total"><span>Total</span><span id="cartTotal">0 HTG</span></div>
+  <div class="row"><button class="d" onclick="cart=[];drawCart()">Vide panye</button><button class="p" onclick="validate()">Valide tikè</button></div></div>
+</section>
+<section class="screen" id="s-tike"><div class="chips" id="chips"></div><div id="tickets"></div></section>
+<section class="screen" id="s-rapo"><div class="f"><label>Peryòd</label><select id="rPer" onchange="drawReport()"><option value="0">Jodi a</option><option value="7">7 dènye jou</option><option value="all">Tout</option></select></div><div class="grid" id="rGrid"></div></section>
+<section class="screen" id="s-kont">
+ <div class="card"><h3 id="kName"></h3><div class="line"><span>Non itilizatè</span><span class="t" id="kUser"></span></div><div class="line"><span>Komisyon</span><span class="t" id="kCom"></span></div><div class="line"><span>ID aparèy</span><span class="t" id="kDev" style="font-size:12px;word-break:break-all;max-width:60%;text-align:right"></span></div><button class="w" style="margin-top:8px" onclick="copyDev()">Kopye ID aparèy la</button></div>
+ <div class="card"><h3>Chanje modpas</h3><div class="f"><label>Nouvo modpas</label><input id="kPass" type="password" autocomplete="new-password" placeholder="Antre modpas"><div class="err" id="ePw"></div></div><button class="p w" onclick="changePw()">Chanje modpas</button></div>
+ <button class="d w" onclick="logout()">Dekonekte</button>
+</section>
+</main>
+<nav id="nav"></nav>
+<div id="modal" onclick="if(event.target===this)closeM()"><div class="sheet" id="sheet"></div></div>
+<div id="toast"></div>
+<script>
+const $=id=>document.getElementById(id);
+const CFG_KEY='ccl_supabase_public_config_v1',TK_KEY='ccl1_vendor_tickets',CT_KEY='ccl1_vendor_counter';
+const DRAWS=['Maten 10:00','Midi 12:00','Aswè 18:00'];
+const GAMES={'Bòlèt':{re:/^\d{2}$/,hint:'2 chif (egz. 07)'},'Maryaj':{re:/^\d{2}\*\d{2}$/,hint:'2 boul (egz. 07*34)'},'Loto 3':{re:/^\d{3}$/,hint:'3 chif'},'Loto 4':{re:/^\d{4}$/,hint:'4 chif'},'Loto 5':{re:/^\d{5}$/,hint:'5 chif'}};
+const TABS=[['s-vann','Vann'],['s-tike','Tikè'],['s-rapo','Rapò'],['s-kont','Kont']];
+let sb=null,user=null,cart=[],filt='all';
+const money=n=>Number(n).toLocaleString('fr-FR',{maximumFractionDigits:2})+' HTG';
+const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}};
+const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+function h(tag,props,...kids){const e=document.createElement(tag);Object.assign(e,props||{});kids.flat().forEach(k=>e.append(k instanceof Node?k:String(k)));return e}
+function toast(m){const t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display='none',2600)}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.s===id));if(id==='s-tike')drawTickets();if(id==='s-rapo')drawReport();window.scrollTo(0,0)}
+TABS.forEach(([id,t])=>{const b=h('button',{textContent:t,onclick:()=>show(id)});b.dataset.s=id;$('nav').append(b)});
+DRAWS.forEach(d=>$('vDraw').append(h('option',{textContent:d})));
+Object.keys(GAMES).forEach(g=>$('vGame').append(h('option',{textContent:g})));
+$('vGame').onchange=()=>{$('vBoul').placeholder='Boul : '+GAMES[$('vGame').value].hint};$('vGame').onchange();
+['lUser','lPass'].forEach(i=>$(i).addEventListener('input',()=>{$('eUser').textContent=$('ePass').textContent=$('eLogin').textContent=''}));
+
+
+/* ---- ID inik aparèy ---- */
+let DEVID=null;
+async function getDeviceId(){if(DEVID)return DEVID;
+ const D=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Device;
+ if(D){try{const r=await D.getId();const v=r&&(r.identifier||r.uuid);if(v){DEVID=String(v);return DEVID}}catch(e){}}
+ let id=load('ccl1_device_id',null);
+ if(!id){id=(crypto.randomUUID?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&3|8)).toString(16)}));save('ccl1_device_id',id)}
+ DEVID=id;return id}
+getDeviceId().then(id=>{$('lDev').textContent=id;$('kDev').textContent=id});
+function copyDev(){if(navigator.clipboard)navigator.clipboard.writeText(DEVID||'').then(()=>toast('ID kopye'),()=>toast('Kopye pa posib'));else toast(DEVID)}
+async function checkDevice(uid){const id=await getDeviceId();
+ const {data,error}=await sb.from('ccl_devices').select('status').eq('device_id',id).maybeSingle();
+ if(error)throw new Error('Verifikasyon aparèy la echwe : '+error.message);
+ if(!data){const r=await sb.from('ccl_devices').insert({device_id:id,user_id:uid,label:navigator.userAgent.slice(0,120)});
+  await sb.auth.signOut();
+  if(r.error)throw new Error(r.error.code==='23505'?'Aparèy sa a deja anrejistre pou yon lòt vèndè.':'Anrejistreman aparèy la echwe : '+r.error.message);
+  throw new Error('Aparèy la anrejistre. Mande administratè a pou apwouve ID sa a : '+id)}
+ if(data.status!=='approved'){await sb.auth.signOut();throw new Error(data.status==='blocked'?'Aparèy sa a bloke. ID : '+id:'Aparèy sa a poko apwouve. ID : '+id)}}
+
+/* ---- koneksyon ---- */
+const cfg=load(CFG_KEY,{});$('cUrl').value=cfg.url||'';$('cKey').value=cfg.key||'';
+function saveCfg(){const c={...load(CFG_KEY,{}),url:$('cUrl').value.trim(),key:$('cKey').value.trim()};if(!c.url||!c.key)return toast('URL ak kle piblik obligatwa');save(CFG_KEY,c);toast('Koneksyon sove')}
+function enter(u){user=u;$('login').style.display='none';$('hUser').textContent=u.name;$('kName').textContent=u.name;$('kUser').textContent=u.username;$('kCom').textContent=u.commission+' %';show('s-vann')}
+function demo(){enter({name:'Vèndè Demo',username:'vende-demo',commission:10,demo:true})}
+async function login(){
+ const u=$('lUser').value.trim().toLowerCase(),p=$('lPass').value;let bad=false;
+ if(!u){$('eUser').textContent='Non itilizatè obligatwa';bad=true}if(!p){$('ePass').textContent='Modpas obligatwa';bad=true}if(bad)return;
+ const c=load(CFG_KEY,{});if(!c.url||!c.key)return $('eLogin').textContent='Sèvè a pa konfigire. Louvri "Koneksyon sèvè" oswa itilize mòd demo.';
+ try{if(!window.supabase)throw new Error('SDK Supabase pa chaje. Verifye entènèt la.');sb=window.supabase.createClient(c.url,c.key);
+  const {error}=await sb.auth.signInWithPassword({email:u.includes('@')?u:u+'@login.ccl.local',password:p});if(error)throw new Error('Non itilizatè oswa modpas pa kòrèk.');
+  const {data:{user:au}}=await sb.auth.getUser();const {data:pr,error:e2}=await sb.from('ccl_profiles').select('id,role,is_active,full_name,username').eq('id',au.id).single();if(e2)throw e2;
+  if(!pr.is_active)throw new Error('Kont sa a dezaktive.');
+  if(!['seller','cashier','vendeur','caissier'].includes(String(pr.role).toLowerCase())){await sb.auth.signOut();throw new Error('Kont sa a pa yon kont vèndè.')}
+  await checkDevice(pr.id);
+  enter({name:pr.full_name||pr.username||u,username:pr.username||u,commission:10,id:pr.id})
+ }catch(e){$('eLogin').textContent=e.message||String(e)}
+}
+async function logout(){try{if(sb)await sb.auth.signOut()}catch(e){}sb=null;user=null;cart=[];drawCart();$('lPass').value='';$('login').style.display='flex'}
+async function changePw(){const p=$('kPass').value;if(!p)return $('ePw').textContent='Modpas obligatwa';if(p.length<8)return $('ePw').textContent='Modpas la dwe gen omwen 8 karaktè';$('ePw').textContent='';
+ if(user.demo)return toast('Mòd demo : modpas pa chanje');try{const {error}=await sb.auth.updateUser({password:p});if(error)throw error;$('kPass').value='';toast('Modpas chanje')}catch(e){$('ePw').textContent=e.message}}
+
+/* ---- vant ---- */
+function addLine(){
+ const g=$('vGame').value;let b=$('vBoul').value.trim().replace(/\s+/g,'*'),a=parseFloat($('vAmt').value),bad=false;
+ if(!b){$('eBoul').textContent='Boul obligatwa';bad=true}else if(!GAMES[g].re.test(b)){$('eBoul').textContent='Boul pa valid : '+GAMES[g].hint;bad=true}else $('eBoul').textContent='';
+ if(!(a>0)){$('eAmt').textContent='Montan obligatwa';bad=true}else $('eAmt').textContent='';
+ if(bad)return;cart.push({game:g,boul:b,amt:a});$('vBoul').value='';$('vAmt').value='';drawCart();$('vBoul').focus()}
+function drawCart(){const c=$('cart');c.innerHTML='';if(!cart.length)c.append(h('p',{className:'mut',textContent:'Panye a vid. Ajoute yon boul pou kòmanse.'}));
+ cart.forEach((l,i)=>c.append(h('div',{className:'line'},h('div',{},h('b',{},l.boul),h('div',{className:'mut',textContent:l.game})),h('span',{className:'t',textContent:money(l.amt)}),h('button',{className:'d',textContent:'✕',title:'Retire',onclick:()=>{cart.splice(i,1);drawCart()}}))));
+ $('cartTotal').textContent=money(cart.reduce((x,l)=>x+l.amt,0))}
+function validate(){if(!cart.length)return toast('Panye a vid');
+ const n=load(CT_KEY,0)+1;save(CT_KEY,n);const t={code:'CCL1-'+String(n).padStart(6,'0'),at:new Date().toISOString(),draw:$('vDraw').value,seller:user.name,lines:cart.slice(),total:cart.reduce((x,l)=>x+l.amt,0),status:'vann',prize:0};
+ const all=load(TK_KEY,[]);all.unshift(t);save(TK_KEY,all);cart=[];drawCart();toast('Tikè '+t.code+' kreye');receipt(t)}
+
+/* ---- tikè ---- */
+const ST={vann:'Vann',ganyan:'Ganyan',efase:'Efase'};
+function drawTickets(){const ch=$('chips');ch.innerHTML='';[['all','Tout'],['vann','Vann'],['ganyan','Ganyan'],['efase','Efase']].forEach(([k,t])=>ch.append(h('button',{textContent:t,className:filt===k?'on':'',onclick:()=>{filt=k;drawTickets()}})));
+ const box=$('tickets');box.innerHTML='';const list=load(TK_KEY,[]).filter(t=>filt==='all'||t.status===filt);
+ if(!list.length)return box.append(h('p',{className:'mut',textContent:'Pa gen tikè. Kreye premye tikè ou nan paj Vann.'}));
+ list.forEach(t=>box.append(h('div',{className:'card',style:'cursor:pointer',onclick:()=>receipt(t)},h('div',{className:'line',style:'border:0;padding:0'},h('b',{},t.code),h('span',{className:'badge '+t.status,textContent:ST[t.status],style:'margin-left:auto'})),h('div',{className:'mut',textContent:t.draw+' · '+new Date(t.at).toLocaleString('fr-FR')}),h('div',{style:'font-weight:800;margin-top:4px',textContent:money(t.total)}))))}
+function receipt(t){const s=$('sheet');s.innerHTML='';
+ const p=h('div',{className:'paper'},h('div',{className:'c'},h('b',{},'CCL1'),h('br'),'Resi '+t.code),h('hr'),h('div',{},'Tiraj : '+t.draw),h('div',{},'Dat : '+new Date(t.at).toLocaleString('fr-FR')),h('div',{},'Vèndè : '+t.seller),h('hr'),
+  ...t.lines.map(l=>h('div',{className:'r'},h('span',{},l.game+' '+l.boul),h('span',{},money(l.amt)))),h('hr'),h('div',{className:'r'},h('b',{},'TOTAL'),h('b',{},money(t.total))),h('div',{className:'c'},'Estati : '+ST[t.status]));
+ const txt='CCL1 '+t.code+'\n'+t.draw+'\n'+t.lines.map(l=>l.game+' '+l.boul+' : '+money(l.amt)).join('\n')+'\nTotal : '+money(t.total);
+ const btns=h('div',{className:'btns'},h('div',{className:'row'},h('button',{className:'p',textContent:'Enprime',onclick:()=>window.print()}),h('button',{textContent:'WhatsApp',onclick:()=>window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank','noopener')})));
+ if(t.status==='vann')btns.append(h('button',{className:'d w',style:'margin-top:8px',textContent:'Anile tikè',onclick:()=>{if(!confirm('Anile tikè '+t.code+' ?'))return;const all=load(TK_KEY,[]),x=all.find(y=>y.code===t.code);x.status='efase';save(TK_KEY,all);closeM();drawTickets();toast('Tikè anile')}}));
+ btns.append(h('button',{className:'w',style:'margin-top:8px',textContent:'Fèmen',onclick:closeM}));s.append(p,btns);$('modal').classList.add('on')}
+function closeM(){$('modal').classList.remove('on')}
+
+/* ---- rapò ---- */
+function drawReport(){const per=$('rPer').value,now=new Date(),day0=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+ const list=load(TK_KEY,[]).filter(t=>per==='all'||new Date(t.at)>=(per==='0'?day0:new Date(day0.getTime()-6*864e5)));
+ const sold=list.filter(t=>t.status!=='efase'),sales=sold.reduce((x,t)=>x+t.total,0),win=list.filter(t=>t.status==='ganyan'),paid=win.reduce((x,t)=>x+t.prize,0),com=sales*(user?user.commission:0)/100;
+ const g=$('rGrid');g.innerHTML='';[['Tikè vann',sold.length],['Lavant',money(sales)],['Tikè ganyan',win.length],['Peye',money(paid)],['Tikè efase',list.length-sold.length],['Komisyon',money(com)],['Balans san komisyon',money(sales-paid)],['Balans ak komisyon',money(sales-paid-com)]].forEach(([k,v])=>g.append(h('div',{className:'m'},h('b',{},v),h('span',{},k))))}
+drawCart();
+</script>
+</body>
+</html>
